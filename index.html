@@ -1,172 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LHR Globe Route Map</title>
-
-<!-- Three.js + Globe.js CDN -->
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three-globe"></script>
-<script src="https://unpkg.com/d3@7"></script>
-<script src="https://unpkg.com/topojson-client@3"></script>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LHR 3D Route Globe</title>
 <style>
-  body { margin:0; overflow:hidden; background: #000; font-family: sans-serif; }
-  #globe-container { width:100vw; height:100vh; }
+  body { margin: 0; overflow: hidden; font-family: sans-serif; }
+  #globe-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
   .tooltip {
-    position:absolute;
-    background: rgba(0,0,0,0.75);
-    color:#fff;
-    padding:6px 10px;
-    border-radius:6px;
-    pointer-events:none;
-    font-size:13px;
-    font-weight:500;
-    white-space:nowrap;
-    display:none;
-    z-index:10;
+    position: absolute;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 14px;
+    display: none;
   }
 </style>
 </head>
 <body>
 <div id="globe-container"></div>
-<div class="tooltip" id="tooltip"></div>
+<div id="tooltip" class="tooltip"></div>
 
-<script>
-  // -----------------------------
-  // 1) Destinations list
-  // -----------------------------
-  const DESTINATIONS = [
-    { name: "Aberdeen International Airport", iata: "ABZ", coords: [57.201, -2.197], region: "Europe", country: "UK" },
-    { name: "Amsterdam Schiphol Airport", iata: "AMS", coords: [52.308, 4.763], region: "Europe", country: "Netherlands" },
-    { name: "Athens International Airport", iata: "ATH", coords: [37.936, 23.944], region: "Europe", country: "Greece" },
-    { name: "New York JFK", iata: "JFK", coords: [40.6413, -73.7781], region: "Americas", country: "USA" },
-    { name: "Los Angeles LAX", iata: "LAX", coords: [33.9416, -118.4085], region: "Americas", country: "USA" },
-    { name: "Tokyo Haneda HND", iata: "HND", coords: [35.5494, 139.7798], region: "Asia", country: "Japan" },
-    { name: "Singapore SIN", iata: "SIN", coords: [1.3644, 103.9915], region: "Asia", country: "Singapore" },
-    { name: "Johannesburg JNB", iata: "JNB", coords: [-26.1367, 28.2410], region: "Africa", country: "South Africa" },
-    { name: "Cape Town CPT", iata: "CPT", coords: [-33.9696, 18.5972], region: "Africa", country: "South Africa" },
-    { name: "Sydney SYD", iata: "SYD", coords: [-33.9399, 151.1753], region: "Oceania", country: "Australia" },
-    { name: "Auckland AKL", iata: "AKL", coords: [-37.0082, 174.7850], region: "Oceania", country: "New Zealand" }
+<script type="module">
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+import ThreeGlobe from 'https://unpkg.com/three-globe@2.25.8/dist/three-globe.module.js';
+
+// -----------------------------
+// 1) Scene, camera, renderer
+// -----------------------------
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+camera.position.z = 400;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.getElementById('globe-container').appendChild(renderer.domElement);
+
+// -----------------------------
+// 2) Lights
+// -----------------------------
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+directionalLight.position.set(100, 100, 100);
+scene.add(directionalLight);
+
+// -----------------------------
+// 3) Controls
+// -----------------------------
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.1;
+
+// -----------------------------
+// 4) Globe
+// -----------------------------
+const globe = new ThreeGlobe({
+  showAtmosphere: true
+})
+  .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-night.jpg')
+  .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+  .pointsData([])
+  .pointAltitude(0.02)
+  .pointColor(() => 'orange');
+
+scene.add(globe);
+
+// -----------------------------
+// 5) Destinations
+// -----------------------------
+const DESTINATIONS = [
+  { name: "Aberdeen International Airport", iata:"ABZ", coords: [57.201, -2.197], region: "Europe", country: "UK" },
+  { name: "Amsterdam Schiphol Airport", iata:"AMS", coords: [52.308, 4.763], region: "Europe", country: "Netherlands" },
+  { name: "Athens International Airport", iata:"ATH", coords: [37.936, 23.944], region: "Europe", country: "Greece" },
+  { name: "Barcelona El Prat Airport", iata:"BCN", coords: [41.297, 2.078], region: "Europe", country: "Spain" },
+  { name: "Berlin Brandenburg Airport", iata:"BER", coords: [52.366, 13.503], region: "Europe", country: "Germany" },
+  { name: 'New York JFK', iata: 'JFK', coords: [40.6413, -73.7781], region: 'Americas', country: 'USA' },
+  { name: 'Los Angeles LAX', iata: 'LAX', coords: [33.9416, -118.4085], region: 'Americas', country: 'USA' },
+  { name: 'Dubai DXB', iata: 'DXB', coords: [25.2532, 55.3657], region: 'Middle East', country: 'UAE' },
+  { name: 'Tokyo Haneda HND', iata: 'HND', coords: [35.5494, 139.7798], region: 'Asia', country: 'Japan' },
+  { name: 'Johannesburg JNB', iata: 'JNB', coords: [-26.1367, 28.2410], region: 'Africa', country: 'South Africa' },
+  { name: 'Sydney SYD', iata: 'SYD', coords: [-33.9399, 151.1753], region: 'Oceania', country: 'Australia' }
+];
+
+const LHR = { name: "London Heathrow", iata:"LHR", coords: [51.470, -0.454] };
+
+// Convert lat/lon to Three.js xyz
+function latLonToXYZ(lat, lon, radius=100) {
+  const phi = (90 - lat) * (Math.PI/180);
+  const theta = (lon + 180) * (Math.PI/180);
+  return [
+    -radius * Math.sin(phi) * Math.cos(theta),
+    radius * Math.cos(phi),
+    radius * Math.sin(phi) * Math.sin(theta)
   ];
+}
 
-  const HUB = { name: "London Heathrow", iata:"LHR", coords:[51.4700, -0.4543] };
+// Create arcs and points
+const arcs = [];
+const points = [];
 
-  // -----------------------------
-  // 2) Three.js scene
-  // -----------------------------
-  const container = document.getElementById('globe-container');
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 2000);
-  camera.position.z = 400;
+DESTINATIONS.forEach(dest => {
+  // Points
+  const [x,y,z] = latLonToXYZ(dest.coords[0], dest.coords[1]);
+  points.push({ lat: dest.coords[0], lng: dest.coords[1], size: 0.5, color: 'orange', name: dest.name });
 
-  const renderer = new THREE.WebGLRenderer({ antialias:true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  container.appendChild(renderer.domElement);
+  // Great-circle arc
+  const [lx, ly, lz] = latLonToXYZ(LHR.coords[0], LHR.coords[1]);
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(lx, ly, lz),
+    new THREE.Vector3((lx+x)/2, (ly+y)/2+20, (lz+z)/2),
+    new THREE.Vector3(x, y, z)
+  ]);
+  const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(64));
+  const material = new THREE.LineBasicMaterial({ color: 'cyan', linewidth: 2 });
+  const line = new THREE.Line(geometry, material);
+  arcs.push(line);
+  scene.add(line);
+});
 
-  // -----------------------------
-  // 3) Globe
-  // -----------------------------
-  const Globe = new ThreeGlobe({ 
-    showAtmosphere: true,
-    atmosphereColor: 'lightskyblue',
-    atmosphereAltitude: 0.25
-  })
-  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')  // dark style globe
-  .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-  .pointsData([HUB, ...DESTINATIONS].map(d=>({
-    lat: d.coords[0],
-    lng: d.coords[1],
-    size: d === HUB ? 2.5 : 1.2,
-    color: d === HUB ? 'orange' : '#0ea5e9',
-    name: d.name,
-    iata: d.iata,
-    region: d.region,
-    country: d.country
-  })))
-  .pointAltitude('size')
-  .pointColor('color')
-  .pointLabel(d=>`${d.name} (${d.iata})`);
+globe.pointsData(points)
+     .pointLat('lat')
+     .pointLng('lng')
+     .pointColor('color')
+     .pointAltitude('size');
 
-  scene.add(Globe);
-
-  // -----------------------------
-  // 4) Routes (great-circle arcs)
-  // -----------------------------
-  const arcs = DESTINATIONS.map(d => ({
-    startLat: HUB.coords[0],
-    startLng: HUB.coords[1],
-    endLat: d.coords[0],
-    endLng: d.coords[1],
-    color: 'rgba(34,211,238,0.8)',
-    dashLength: 0.5,
-    arcAltitude: 0.2
-  }));
-  Globe.arcsData(arcs)
-    .arcColor('color')
-    .arcDashLength('dashLength')
-    .arcDashGap(0.1)
-    .arcDashInitialGap(() => Math.random())
-    .arcDashAnimateTime(3000)
-    .arcAltitude('arcAltitude');
-
-  // -----------------------------
-  // 5) Tooltip
-  // -----------------------------
-  const tooltip = document.getElementById('tooltip');
-  let mouse = new THREE.Vector2();
-
-  window.addEventListener('mousemove', e => {
-    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
-  });
-
+// -----------------------------
+// 6) Tooltip
+// -----------------------------
+const tooltip = document.getElementById('tooltip');
+renderer.domElement.addEventListener('mousemove', (evt) => {
+  const mouse = new THREE.Vector2(
+    (evt.clientX / window.innerWidth) * 2 - 1,
+    -(evt.clientY / window.innerHeight) * 2 + 1
+  );
   const raycaster = new THREE.Raycaster();
-
-  function updateTooltip() {
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(Globe.pointsData().map(p=>p.__threeObj).filter(Boolean));
-    if (intersects.length) {
-      const obj = intersects[0].object.__data;
-      tooltip.style.display='block';
-      tooltip.style.left = (event.clientX+10)+'px';
-      tooltip.style.top = (event.clientY+10)+'px';
-      tooltip.innerHTML = `<strong>${obj.name} (${obj.iata})</strong><br>${obj.region} - ${obj.country}`;
-    } else {
-      tooltip.style.display='none';
-    }
-  }
-
-  // -----------------------------
-  // 6) Controls (orbit)
-  // -----------------------------
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableZoom = true;
-  controls.enablePan = false;
-  controls.minDistance = 200;
-  controls.maxDistance = 800;
-
-  // -----------------------------
-  // 7) Animate
-  // -----------------------------
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    updateTooltip();
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  // Resize
-  window.addEventListener('resize', ()=> {
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = globe.pointsData().map((p,i) => {
+    const [x,y,z] = latLonToXYZ(p.lat, p.lng, 100);
+    return { obj: p, dist: camera.position.distanceTo(new THREE.Vector3(x,y,z)) };
   });
-</script>
+  // Simple hover detection
+  if (intersects.length) {
+    tooltip.style.display = 'block';
+    tooltip.style.left = evt.clientX + 12 + 'px';
+    tooltip.style.top = evt.clientY + 12 + 'px';
+    tooltip.innerText = intersects[0].obj.name;
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
 
-<!-- OrbitControls -->
-<script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+// -----------------------------
+// 7) Animate
+// -----------------------------
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
 </body>
 </html>
